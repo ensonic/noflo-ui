@@ -102,7 +102,14 @@
       <template if="{{ runtime }}">
         <i id="runtime_icon" class="fa fa-{{ icon }}"></i>
         <div id="address" class="{{ { online: online } | tokenList }}">
-          <button title="Connect/Disconnect" on-click="{{ reconnect }}"><i class="fa fa-refresh"></i></button>
+          <button title="Connect/Disconnect" on-click="{{ reconnect }}">
+            <template if="{{ querying == false }}">
+              <i class="fa fa-refresh"></i>
+            </template>
+            <template if="{{ querying }}">
+              <i class="fa fa-refresh fa-spin"></i>
+            </template>
+          </button>
           <h2>{{ runtime.definition.address }}</h2>
           <button title="Change Runtime" on-click="{{ clearRuntime }}" class="clear"><i class="fa fa-exchange"></i></button>
         </div>
@@ -131,6 +138,7 @@
       runtime: null,
       runtimes: [],
       online: false,
+      querying: false,
       execution: {
         label: 'not started',
         running: false
@@ -168,6 +176,7 @@
         this.online = false;
         this.execution.running = false;
         this.execution.label = 'not started';
+        this.querying = false;
 
         this.icon = this.getRuntimeIcon(this.runtime);
 
@@ -208,6 +217,14 @@
             if (this.panel) {
               this.panel.open = false;
             }
+            this.querying = false;
+          } else {
+            this.querying = true;
+          }
+        }.bind(this));
+        this.runtime.on('component', function (message) {
+          if (message.command === 'componentsready') {
+            this.querying = false;
           }
         }.bind(this));
         this.runtime.on('network', function (message) {
